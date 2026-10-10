@@ -158,7 +158,7 @@
     {% elif active_tab == 'photos' %}
     <div class="container">
         <h2>写真アルバム</h2>
-        <form action="/trip/{{ trip.id }}/add_photo" method="POST" enctype="multipart/form-data">
+        <form action="/trip/{{ trip.id }}/photo" method="POST" enctype="multipart/form-data">
             <input type="file" name="photo" accept="image/*" required>
             <input type="text" name="caption" placeholder="キャプション">
             <input type="hidden" name="album" id="selected-album" value="未分類">

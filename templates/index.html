@@ -18,22 +18,50 @@
         .add-form { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 500px; }
         .add-form input[type="text"], 
         .add-form input[type="date"] {
-        margin: 6px 0; 
-        padding: 8px 12px; /* 上下の余白をスッキリさせる */
-        width: 100%; 
-        box-sizing: border-box; /* はみ出しを防ぐ */
-        font-size: 1.05rem; /* 日付の文字を大きく */
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background-color: #f0f0f0; /* グレーの背景 */
+            margin: 6px 0; 
+            padding: 10px 12px; /* 上下の余白をスッキリさせる */
+            width: 100%; 
+            box-sizing: border-box; /* はみ出しを防ぐ */
+            font-size: 1.05rem; /* 日付の文字を大きく */
+            border: 1px solid #d1d5db; /* グレーの枠線 */
+            border-radius: 9999px;
+            background-color: #f3f4f6; /* グレーの背景 */
+            -webkit-appearance: none;  /* iOSのデフォルトスタイルを解除して角丸やパディングを効かせる */
+            appearance: none;
         }
-        .add-form button { margin: 6px 0; padding: 10px; width: 100%; box-sizing: border-box; }
-        .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
-        .checkbox-label { font-size: 0.95em; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-        .checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
-        .add-form button { background: #3182ce; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 12px; }
-        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
-        .checkbox-label { font-size: 0.9em; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+        .add-form button { 
+            margin: 12px 0 6px 0; 
+            padding: 10px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            background: #3182ce; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
+
+        .checkbox-group { 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            margin: 12px 0; 
+        }
+
+        .checkbox-label { 
+            font-size: 0.95em; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+        }
+
+        .checkbox-label input[type="checkbox"] { 
+            width: auto; 
+            margin: 0; 
+        }
     </style>
 
     <link rel="manifest" href="/manifest.json">
@@ -54,7 +82,27 @@
                     .catch(err => console.error('SW Register Error:', err));
             });
         }
-</script>
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        const dateError = document.getElementById('date-error');
+        const form = document.getElementById('trip-form');
+
+        startDateInput.addEventListener('change', function() {
+            endDateInput.min = startDateInput.value;
+            if (endDateInput.value && endDateInput.value < startDateInput.value) {
+                endDateInput.value = startDateInput.value;
+            }
+        });
+
+        form.addEventListener('submit', function(e) {
+            if (endDateInput.value < startDateInput.value) {
+                e.preventDefault(); // 送信をストップ
+                dateError.style.display = 'block';
+            } else {
+                dateError.style.display = 'none';
+            }
+        });
+       </script>
 
 <body>
     <h1>TraveLog</h1>
@@ -75,20 +123,24 @@
 
     <div class="add-form">
         <h3>新しい旅行を作成</h3>
-        <form action="/add_trip" method="POST">
+        <form action="/add_trip" method="POST" id="trip-form">
             <input type="text" name="title" placeholder="旅行のタイトル (例: ウズベキスタン旅行)" required>
-            
+    
             <div style="margin: 8px 0;">
                 <label style="font-size: 0.85em; color: #718096; display: block; margin-bottom: 2px;">出発日</label>
-                <input type="date" name="start_date" required style="width: 100%;">
+                <input type="date" id="start-date" name="start_date" value="{{ today }}" required style="width: 100%;">
             </div>
 
             <div style="margin: 8px 0;">
                 <label style="font-size: 0.85em; color: #718096; display: block; margin-bottom: 2px;">終了日</label>
-                <input type="date" name="end_date" required style="width: 100%;">
+                <input type="date" id="end-date" name="end_date" value="{{ today }}" required style="width: 100%;">
             </div>
-            
-            <p style="margin: 12px 0 4px 0; font-size: 0.9em; font-weight: bold;">使用予定の通貨を選択:</p>
+
+            <div id="date-error" style="color: #ef4444; font-size: 0.85em; margin-top: 4px; display: none;">
+                終了日は出発日以降の日付を選択してください。
+            </div>
+
+        <p style="margin: 12px 0 4px 0; font-size: 0.9em; font-weight: bold;">使用予定の通貨を選択:</p>
             <div class="checkbox-group">
                 {% for curr in supported_currencies %}
                 <label class="checkbox-label">
