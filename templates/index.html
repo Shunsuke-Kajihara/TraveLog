@@ -16,12 +16,15 @@
         .tag { background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold; }
 
         .add-form { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 500px; }
-        .add-form input, .add-form button { margin: 6px 0; padding: 10px; width: 100%; box-sizing: border-box; }
+        .add-form input[type="text"], .add-form input[type="date"], .add-form button { margin: 6px 0; padding: 10px; width: 100%; box-sizing: border-box; }
+        .checkbox-group { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+        .checkbox-label { font-size: 0.95em; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
         .add-form button { background: #3182ce; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 12px; }
         .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
         .checkbox-label { font-size: 0.9em; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    </style>
 
-    \\iOS向けメタタグ
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3182ce">
     <!-- iOS / Safari 向けPWA設定 -->
@@ -30,8 +33,6 @@
     <meta name="apple-mobile-web-app-title" content="TraveLog">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
         
-        
-    </style>
 </head>
 
 <script>
@@ -42,8 +43,8 @@
                     .catch(err => console.error('SW Register Error:', err));
             });
         }
-    </script>
-    
+</script>
+
 <body>
     <h1>TraveLog</h1>
 

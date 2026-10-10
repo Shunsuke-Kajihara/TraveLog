@@ -10,5 +10,11 @@
       "category": "食事"
     }
   ],
-  "photos": []
+  "photos": [
+    {
+      "path": "/static/uploads/2025_Uz/sake_kanpai.jpg",
+      "caption": "test2",
+      "album": "未分類"
+    }
+  ]
 }
