@@ -233,33 +233,35 @@ def add_photo(trip_id):
     if not data:
         return "旅行データが見つかりません", 404
 
-    if "photo" not in request.files:
+    # 複数ファイルを取得
+    files = request.files.getlist("photo")
+    if not files or files[0].filename == '':
         return redirect(f"/trip/{trip_id}?tab=photos")
 
-    file = request.files["photo"]
     caption = request.form.get("caption", "")
     album = request.form.get("album", "未分類").strip()
     if not album:
         album = "未分類"
 
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        trip_upload_folder = os.path.join(app.config["UPLOAD_FOLDER"], trip_id)
-        os.makedirs(trip_upload_folder, exist_ok=True)
+    if "photos" not in data:
+        data["photos"] = []
 
-        save_path = os.path.join(trip_upload_folder, filename)
-        file.save(save_path)
+    # 選択されたファイルを1枚ずつ処理して保存
+    for file in files:
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            trip_upload_folder = os.path.join(app.config["UPLOAD_FOLDER"], trip_id)
+            os.makedirs(trip_upload_folder, exist_ok=True)
 
-        web_path = f"/static/uploads/{trip_id}/{filename}"
+            save_path = os.path.join(trip_upload_folder, filename)
+            file.save(save_path)
 
-        if "photos" not in data:
-            data["photos"] = []
+            web_path = f"/static/uploads/{trip_id}/{filename}"
+            data["photos"].append(
+                {"path": web_path, "caption": caption, "album": album}
+            )
 
-        data["photos"].append(
-            {"path": web_path, "caption": caption, "album": album}
-        )
-        save_trip_data(trip_id, data)
-
+    save_trip_data(trip_id, data)
     return redirect(f"/trip/{trip_id}?tab=photos")
 
 
