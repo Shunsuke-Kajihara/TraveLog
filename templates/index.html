@@ -66,8 +66,16 @@
         <h3>新しい旅行を作成</h3>
         <form action="/add_trip" method="POST">
             <input type="text" name="title" placeholder="旅行のタイトル (例: ウズベキスタン旅行)" required>
-            <input type="date" name="start_date" required>
-            <input type="date" name="end_date" required>
+            
+            <div style="margin: 8px 0;">
+                <label style="font-size: 0.85em; color: #718096; display: block; margin-bottom: 2px;">出発日</label>
+                <input type="date" name="start_date" required style="width: 100%;">
+            </div>
+
+            <div style="margin: 8px 0;">
+                <label style="font-size: 0.85em; color: #718096; display: block; margin-bottom: 2px;">終了日</label>
+                <input type="date" name="end_date" required style="width: 100%;">
+            </div>
             
             <p style="margin: 12px 0 4px 0; font-size: 0.9em; font-weight: bold;">使用予定の通貨を選択:</p>
             <div class="checkbox-group">
