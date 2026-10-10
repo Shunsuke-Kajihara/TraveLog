@@ -229,39 +229,47 @@ def update_currencies(trip_id):
 
 @app.route("/trip/<trip_id>/add_photo", methods=["POST"])
 def add_photo(trip_id):
-    data = load_trip_data(trip_id)
-    if not data:
-        return "旅行データが見つかりません", 404
+    print("--- add_photo called ---")
+    try:
+        data = load_trip_data(trip_id)
+        if not data:
+            return "旅行データが見つかりません", 404
 
-    # 複数ファイルを取得
-    files = request.files.getlist("photo")
-    if not files or files[0].filename == '':
-        return redirect(f"/trip/{trip_id}?tab=photos")
+        files = request.files.getlist("photo")
+        print(f"Files received: {files}")
+        
+        if not files or files[0].filename == '':
+            return redirect(f"/trip/{trip_id}?tab=photos")
 
-    caption = request.form.get("caption", "")
-    album = request.form.get("album", "未分類").strip()
-    if not album:
-        album = "未分類"
+        caption = request.form.get("caption", "")
+        album = request.form.get("album", "未分類").strip()
+        if not album:
+            album = "未分類"
 
-    if "photos" not in data:
-        data["photos"] = []
+        if "photos" not in data:
+            data["photos"] = []
 
-    # 選択されたファイルを1枚ずつ処理して保存
-    for file in files:
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            trip_upload_folder = os.path.join(app.config["UPLOAD_FOLDER"], trip_id)
-            os.makedirs(trip_upload_folder, exist_ok=True)
+        for file in files:
+            print(f"Processing file: {file.filename}")
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                trip_upload_folder = os.path.join(app.config["UPLOAD_FOLDER"], trip_id)
+                os.makedirs(trip_upload_folder, exist_ok=True)
 
-            save_path = os.path.join(trip_upload_folder, filename)
-            file.save(save_path)
+                save_path = os.path.join(trip_upload_folder, filename)
+                file.save(save_path)
+                print(f"Saved to: {save_path}")
 
-            web_path = f"/static/uploads/{trip_id}/{filename}"
-            data["photos"].append(
-                {"path": web_path, "caption": caption, "album": album}
-            )
+                web_path = f"/static/uploads/{trip_id}/{filename}"
+                data["photos"].append(
+                    {"path": web_path, "caption": caption, "album": album}
+                )
 
-    save_trip_data(trip_id, data)
+        save_trip_data(trip_id, data)
+        print("Trip data saved successfully.")
+    except Exception as e:
+        print(f"Error in add_photo: {e}")
+
     return redirect(f"/trip/{trip_id}?tab=photos")
 
 
