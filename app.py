@@ -2,6 +2,7 @@ import json
 import os
 from flask import Flask, redirect, render_template, request
 from werkzeug.utils import secure_filename
+from datetime import date
 
 app = Flask(__name__)
 
@@ -50,6 +51,7 @@ def save_trip_data(trip_id, data):
 
 
 @app.route("/")
+@app.route("/")
 def index():
     trips = []
     if os.path.exists("data"):
@@ -57,8 +59,14 @@ def index():
             data = load_trip_data(trip_id)
             if data:
                 trips.append(data)
+                
+    today_str = date.today().strftime("%Y-%m-%d") # 今日を "YYYY-MM-DD" で取得
+    
     return render_template(
-        "index.html", trips=trips, supported_currencies=SUPPORTED_CURRENCIES
+        "index.html", 
+        trips=trips, 
+        supported_currencies=SUPPORTED_CURRENCIES,
+        today=today_str # テンプレートに渡す
     )
 
 
