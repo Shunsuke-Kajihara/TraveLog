@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraveLog - 旅行一覧</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f8fafc; color: #2d3748; }
+        h1 { margin-bottom: 20px; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .trip-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 20px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #e2e8f0; }
+        .trip-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        .trip-title { font-size: 1.25em; font-weight: bold; color: #2b6cb0; margin-bottom: 8px; }
+        .trip-date { font-size: 0.9em; color: #718096; }
+        .currency-tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+        .tag { background: #edf2f7; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold; }
+
+        .add-form { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 500px; }
+        .add-form input, .add-form button { margin: 6px 0; padding: 10px; width: 100%; box-sizing: border-box; }
+        .add-form button { background: #3182ce; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 12px; }
+        .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+        .checkbox-label { font-size: 0.9em; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+    \\iOS向けメタタグ
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3182ce">
+    <!-- iOS / Safari 向けPWA設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TraveLog">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+        
+        
+    </style>
+</head>
+
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('SW Registered!', reg))
+                    .catch(err => console.error('SW Register Error:', err));
+            });
+        }
+    </script>
+    
+<body>
+    <h1>TraveLog</h1>
+
+    <div class="card-grid">
+        {% for trip in trips %}
+        <a href="/trip/{{ trip.id }}" class="trip-card">
+            <div class="trip-title">{{ trip.title }}</div>
+            <div class="trip-date">{{ trip.start_date }} 〜 {{ trip.end_date }}</div>
+            <div class="currency-tags">
+                {% for c in trip.get('currencies', ['JPY']) %}
+                    <span class="tag">{{ c }}</span>
+                {% endfor %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="add-form">
+        <h3>新しい旅行を作成</h3>
+        <form action="/add_trip" method="POST">
+            <input type="text" name="title" placeholder="旅行のタイトル (例: ウズベキスタン旅行)" required>
+            <input type="date" name="start_date" required>
+            <input type="date" name="end_date" required>
+            
+            <p style="margin: 12px 0 4px 0; font-size: 0.9em; font-weight: bold;">使用予定の通貨を選択:</p>
+            <div class="checkbox-group">
+                {% for curr in supported_currencies %}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="currencies" value="{{ curr }}" {% if curr == 'JPY' %}checked{% endif %}>
+                    {{ curr }}
+                </label>
+                {% endfor %}
+            </div>
+
+            <button type="submit">作成する</button>
+        </form>
+    </div>
+</body>
+</html>

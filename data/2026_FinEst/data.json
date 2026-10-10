@@ -1,0 +1,61 @@
+{
+  "id": "2026_FinEst",
+  "title": "フィンランド・エストニア",
+  "start_date": "2026-12-22",
+  "end_date": "2026-12-31",
+  "expenses": [
+    {
+      "item": "外貨テスト",
+      "amount": 10.0,
+      "currency": "EUR",
+      "converted_amount": 1650,
+      "category": "その他"
+    },
+    {
+      "item": "Scandic Aviapolis (12/23~24)",
+      "amount": 13000.0,
+      "currency": "JPY",
+      "converted_amount": 13000,
+      "category": "交通費"
+    },
+    {
+      "item": "東京↔ヘルシンキ　航空券",
+      "amount": 165000.0,
+      "currency": "JPY",
+      "converted_amount": 165000,
+      "category": "交通費"
+    }
+  ],
+  "photos": [
+    {
+      "path": "/static/uploads/2026_FinEst/png",
+      "caption": ""
+    }
+  ],
+  "itinerary": [
+    {
+      "date": "2026-12-22",
+      "time": "13:15",
+      "title": "成田空港発",
+      "memo": "T2 吉祥航空 HO1380"
+    },
+    {
+      "date": "2026-12-22",
+      "time": "15:40",
+      "title": "上海浦東空港着",
+      "memo": "T2 乗り継ぎ17時間"
+    },
+    {
+      "date": "2026-12-23",
+      "time": "12:55",
+      "title": "ヘルシンキ ヴァンター空港着",
+      "memo": ""
+    }
+  ],
+  "currencies": [
+    "JPY",
+    "EUR",
+    "KRW",
+    "CNY"
+  ]
+}

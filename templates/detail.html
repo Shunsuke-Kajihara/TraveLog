@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ trip.title }} - TraveLog</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f8fafc; color: #333; }
+        a { text-decoration: none; color: #3182ce; }
+        
+        .tab-container { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; }
+        .tab-button { padding: 10px 20px; font-size: 1em; font-weight: bold; color: #718096; border-bottom: 3px solid transparent; margin-right: 10px; }
+        .tab-button.active { color: #3182ce; border-bottom-color: #3182ce; }
+        
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        input, select, button { margin: 5px 0; padding: 8px; box-sizing: border-box; }
+        button { background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+        .currency-setting-btn {
+            background: #edf2f7; color: #2d3748; padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: bold; margin-bottom: 15px; display: inline-block; cursor: pointer;
+        }
+
+        /* 削除ボタン用スタイル */
+        .delete-btn {
+            background: transparent; color: #e53e3e; border: none; font-size: 0.9em; cursor: pointer; padding: 2px 6px; border-radius: 4px; margin-left: 8px; opacity: 0.7; transition: opacity 0.2s, background 0.2s;
+        }
+        .delete-btn:hover { opacity: 1; background: #fff5f5; }
+
+        /* 支出一覧 */
+        .category-block { margin-top: 15px; padding: 15px; background: #f7fafc; border-left: 4px solid #3182ce; border-radius: 4px; }
+        .category-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px; }
+        .category-title { font-weight: bold; }
+        .subtotal { color: #2b6cb0; font-weight: bold; }
+        .expense-list { list-style: none; padding: 0; margin: 0; }
+        .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px dashed #edf2f7; }
+
+        /* 写真 */
+        .album-section { margin-top: 30px; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 12px; }
+        .photo-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; position: relative; }
+        .photo-card img { width: 100%; height: 140px; object-fit: cover; display: block; }
+        .photo-delete-btn {
+            position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8em;
+        }
+        .photo-delete-btn:hover { background: rgba(229,62,62,0.9); }
+
+        /* 旅程 */
+        .timeline { margin-top: 20px; border-left: 3px solid #3182ce; padding-left: 20px; }
+        .timeline-item { margin-bottom: 20px; position: relative; display: flex; justify-content: space-between; align-items: flex-start; }
+        .timeline-date { font-size: 0.85em; color: #718096; font-weight: bold; }
+        .timeline-title { font-size: 1.1em; font-weight: bold; }
+
+        /* ボトムシート共通 */
+        .sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.25s ease; }
+        .sheet-overlay.active { opacity: 1; visibility: visible; }
+        .bottom-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; max-height: 80vh; background: white; border-top-left-radius: 16px; border-top-right-radius: 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); z-index: 1001; transition: bottom 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .bottom-sheet.active { bottom: 0; }
+        .sheet-handle { width: 40px; height: 5px; background: #cbd5e0; border-radius: 3px; margin: 0 auto 12px auto; }
+    </style>
+</head>
+<body>
+    <p><a href="/">← 一覧に戻る</a></p>
+    
+    <h1>{{ trip.title }}</h1>
+    <p>日程: {{ trip.start_date }} 〜 {{ trip.end_date }}</p>
+
+    <div class="tab-container">
+        <a href="/trip/{{ trip.id }}?tab=itinerary" class="tab-button {% if active_tab == 'itinerary' %}active{% endif %}">旅程</a>
+        <a href="/trip/{{ trip.id }}?tab=expenses" class="tab-button {% if active_tab == 'expenses' %}active{% endif %}">支出管理</a>
+        <a href="/trip/{{ trip.id }}?tab=photos" class="tab-button {% if active_tab == 'photos' %}active{% endif %}">写真アルバム</a>
+    </div>
+
+    <!-- 1. 旅程 -->
+    {% if active_tab == 'itinerary' %}
+    <div class="container">
+        <h2>旅程・スケジュール</h2>
+        <form action="/trip/{{ trip.id }}/add_itinerary" method="POST">
+            <input type="date" name="date" min="{{ trip.start_date }}" max="{{ trip.end_date }}" required>
+            <input type="time" name="time" required>
+            <input type="text" name="title" placeholder="予定" required>
+            <input type="text" name="memo" placeholder="メモ">
+            <button type="submit">追加</button>
+        </form>
+        <div class="timeline">
+            {% for item in itinerary %}
+            <div class="timeline-item">
+                <div>
+                    <div class="timeline-date">{{ item.date }} {{ item.time }}</div>
+                    <div class="timeline-title">{{ item.title }}</div>
+                    {% if item.memo %}<div style="font-size:0.9em; color:#4a5568;">{{ item.memo }}</div>{% endif %}
+                </div>
+                <form action="/trip/{{ trip.id }}/delete_itinerary/{{ item.idx }}" method="POST" onsubmit="return confirm('この旅程を削除しますか？');">
+                    <button type="submit" class="delete-btn" title="削除">🗑️️</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 2. 支出管理 -->
+    {% elif active_tab == 'expenses' %}
+    <div class="container">
+        <button type="button" class="currency-setting-btn" onclick="openCurrencySheet()">⚙ 使用通貨の設定・追加</button>
+
+        <h2>総額: 約 {{ "{:,}".format(total_expense) }} 円</h2>
+        
+        <form action="/trip/{{ trip.id }}/add_expense" method="POST">
+            <input type="text" name="item" placeholder="項目 (例: タクシー)" required>
+            
+            <div style="display: inline-flex; gap: 4px;">
+                <input type="number" step="0.01" name="amount" placeholder="金額" required style="width: 100px;">
+                <select name="currency">
+                    {% for curr in trip.get('currencies', ['JPY']) %}
+                        <option value="{{ curr }}">{{ curr }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <select name="category">
+                <option value="食事">食事</option>
+                <option value="交通費">交通費</option>
+                <option value="宿泊費">宿泊費</option>
+                <option value="アクティビティ">アクティビティ</option>
+                <option value="お土産">お土産</option>
+                <option value="その他">その他</option>
+            </select>
+            
+            <button type="submit">追加</button>
+        </form>
+
+        {% for cat_name, group in grouped_expenses.items() %}
+        <div class="category-block">
+            <div class="category-header">
+                <span class="category-title">{{ cat_name }}</span>
+                <span class="subtotal">小計: 約 {{ "{:,}".format(group.subtotal) }} 円</span>
+            </div>
+            <ul class="expense-list">
+            {% for item in group.list %}
+                <li class="expense-item">
+                    <div>
+                        {{ item.item }}: 
+                        <strong>{{ item.amount }} {{ item.get('currency', 'JPY') }}</strong> 
+                        {% if item.get('currency', 'JPY') != 'JPY' %}
+                            <span style="color: #718096; font-size: 0.85em;">(約 {{ "{:,}".format(item.converted_amount) }} 円)</span>
+                        {% endif %}
+                    </div>
+                    <form action="/trip/{{ trip.id }}/delete_expense/{{ item.idx }}" method="POST" onsubmit="return confirm('この支出を削除しますか？');">
+                        <button type="submit" class="delete-btn" title="削除">🗑️</button>
+                    </form>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 3. 写真アルバム -->
+    {% elif active_tab == 'photos' %}
+    <div class="container">
+        <h2>写真アルバム</h2>
+        <form action="/trip/{{ trip.id }}/add_photo" method="POST" enctype="multipart/form-data">
+            <input type="file" name="photo" accept="image/*" required>
+            <input type="text" name="caption" placeholder="キャプション">
+            <input type="hidden" name="album" id="selected-album" value="未分類">
+            <button type="button" onclick="openPhotoSheet()" style="display:block; width:100%; text-align:left; background:#f7fafc; color:#333; border:1px solid #cbd5e0;">
+                保存先: <strong id="trigger-album-label">未分類</strong> ▼
+            </button>
+            <button type="submit" style="margin-top:10px;">アップロード</button>
+        </form>
+
+        {% for album_name, photo_list in grouped_photos.items() %}
+            {% if photo_list %}
+            <div class="album-section">
+                <h3>{{ album_name }} ({{ photo_list|length }})</h3>
+                <div class="photo-grid">
+                    {% for photo in photo_list %}
+                    <div class="photo-card">
+                        <img src="{{ photo.path }}">
+                        <form action="/trip/{{ trip.id }}/delete_photo/{{ photo.idx }}" method="POST" onsubmit="return confirm('この写真を削除しますか？');">
+                            <button type="submit" class="photo-delete-btn" title="画像を削除">✕</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 通貨設定用ボトムシート -->
+    <div class="sheet-overlay" id="currency-sheet-overlay" onclick="closeCurrencySheet()"></div>
+    <div class="bottom-sheet" id="currency-sheet">
+        <div class="sheet-handle"></div>
+        <h3>使用通貨の選択</h3>
+        <form action="/trip/{{ trip.id }}/update_currencies" method="POST">
+            {% for curr in supported_currencies %}
+            <div style="margin: 10px 0;">
+                <label>
+                    <input type="checkbox" name="currencies" value="{{ curr }}" {% if curr in trip.get('currencies', ['JPY']) %}checked{% endif %}>
+                    <strong>{{ curr }}</strong>
+                </label>
+            </div>
+            {% endfor %}
+            <button type="submit" style="width:100%; margin-top:15px;">保存する</button>
+        </form>
+    </div>
+
+    <!-- 写真アルバム用ボトムシート -->
+    <div class="sheet-overlay" id="photo-sheet-overlay" onclick="closePhotoSheet()"></div>
+    <div class="bottom-sheet" id="photo-sheet">
+        <div class="sheet-handle"></div>
+        <h3>アルバムを選択</h3>
+        <ul style="list-style:none; padding:0;">
+            {% for album_name in grouped_photos.keys() %}
+            <li style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;" onclick="selectAlbum('{{ album_name }}')">
+                {{ album_name }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        function openCurrencySheet() {
+            document.getElementById('currency-sheet-overlay').classList.add('active');
+            document.getElementById('currency-sheet').classList.add('active');
+        }
+        function closeCurrencySheet() {
+            document.getElementById('currency-sheet-overlay').classList.remove('active');
+            document.getElementById('currency-sheet').classList.remove('active');
+        }
+
+        function openPhotoSheet() {
+            document.getElementById('photo-sheet-overlay').classList.add('active');
+            document.getElementById('photo-sheet').classList.add('active');
+        }
+        function closePhotoSheet() {
+            document.getElementById('photo-sheet-overlay').classList.remove('active');
+            document.getElementById('photo-sheet').classList.remove('active');
+        }
+        function selectAlbum(name) {
+            document.getElementById('selected-album').value = name;
+            document.getElementById('trigger-album-label').textContent = name;
+            closePhotoSheet();
+        }
+    </script>
+</body>
+</html>
