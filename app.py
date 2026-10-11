@@ -3,6 +3,7 @@ import os
 from flask import Flask, redirect, render_template, request
 from werkzeug.utils import secure_filename
 from datetime import date
+import base64
 
 app = Flask(__name__)
 
@@ -229,54 +230,51 @@ def update_currencies(trip_id):
 
 @app.route("/trip/<trip_id>/add_photo", methods=["POST"])
 def add_photo(trip_id):
-    print("=== [DEBUG] add_photo called ===")
-    print("1. Method:", request.method)
-    print("2. Content-Type Header:", request.headers.get("Content-Type"))
-    print("3. request.form (Text data):", dict(request.form))
-    print("4. request.files keys:", list(request.files.keys()))
-    
-    # ファイルがどう格納されているか全チェック
-    for key in request.files:
-        files_list = request.files.getlist(key)
-        print(f"   - file key '{key}': {len(files_list)} items")
-        for f in files_list:
-            print(f"     -> filename: '{f.filename}', mimetype: {f.mimetype}")
-
-    print("=== [DEBUG] end of debug ===")
-    
-    # ── ここから下の通常の処理 ──
     data = load_trip_data(trip_id)
     if not data:
         return "旅行データが見つかりません", 404
 
-    files = request.files.getlist("photo")
-    if not files or files[0].filename == '':
-        return redirect(f"/trip/{trip_id}?tab=photos")
+    # JSONリクエストとして受け取る
+    req_data = request.get_json()
+    if not req_data or "photos" not in req_data:
+        return {"error": "No photos provided"}, 400
 
-    caption = request.form.get("caption", "")
-    album = request.form.get("album", "未分類").strip()
+    photos_payload = req_data["photos"]  # [{name, data (base64)}, ...]
+    caption = req_data.get("caption", "")
+    album = req_data.get("album", "未分類").strip()
     if not album:
         album = "未分類"
 
     if "photos" not in data:
         data["photos"] = []
 
-    for file in files:
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            trip_upload_folder = os.path.join(app.config["UPLOAD_FOLDER"], trip_id)
-            os.makedirs(trip_upload_folder, exist_ok=True)
+    trip_upload_folder = os.path.join(app.config["UPLOAD_FOLDER"], trip_id)
+    os.makedirs(trip_upload_folder, exist_ok=True)
+
+    for item in photos_payload:
+        filename = secure_filename(item["name"])
+        base64_str = item["data"]
+
+        try:
+            # "data:image/jpeg;base64,xxxx..." のようなプレフィックスがあれば剥がす
+            if "," in base64_str:
+                base64_str = base64_str.split(",")[1]
+
+            file_bytes = base64.b64decode(base64_str)
 
             save_path = os.path.join(trip_upload_folder, filename)
-            file.save(save_path)
+            with open(save_path, "wb") as f:
+                f.write(file_bytes)
 
             web_path = f"/static/uploads/{trip_id}/{filename}"
             data["photos"].append(
                 {"path": web_path, "caption": caption, "album": album}
             )
+        except Exception as e:
+            print(f"Error saving photo {filename}: {e}")
 
     save_trip_data(trip_id, data)
-    return redirect(f"/trip/{trip_id}?tab=photos")
+    return {"status": "success"}, 200
 
 
 # 【追加】写真の削除処理（実ファイルも削除）
