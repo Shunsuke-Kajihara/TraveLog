@@ -156,14 +156,19 @@
 
     <!-- 3. 写真アルバム -->
     {% elif active_tab == 'photos' %}
-    <div class="container">
-        <h2>写真アルバム</h2>
-        <form action="/trip/{{ trip.id }}/add_photo" method="POST" enctype="multipart/form-data">
-            <input type="file" name="photo" multiple accept="image/*" required>
-            <input type="text" name="caption" placeholder="キャプション">
-            <input type="text" name="album" placeholder="アルバム名">
-            <button type="submit">アップロード</button>
-        </form>
+        <div class="container">
+            <h2>写真アルバム</h2>
+             <!-- formにidを設定し、onsubmitを無効化 -->
+            <form id="photo-upload-form" onsubmit="return false;">
+                <input type="file" id="photo-input" name="photo" multiple accept="image/*" required>
+                <input type="text" id="caption-input" name="caption" placeholder="キャプション">
+                <input type="text" id="album-input" name="album" placeholder="アルバム名">
+                <button type="button" onclick="uploadPhotos()">アップロード</button>
+            </form>
+        </div>
+
+            <!-- アップロード中の表示用（お好みで） -->
+            <p id="upload-status" style="display:none; color: #3182ce; font-weight: bold; margin-top: 8px;">アップロード中...</p>
 
         {% for album_name, photo_list in grouped_photos.items() %}
             {% if photo_list %}
@@ -240,6 +245,48 @@
             document.getElementById('trigger-album-label').textContent = name;
             closePhotoSheet();
         }
+        async function uploadPhotos() {
+    const fileInput = document.getElementById('photo-input');
+    const captionInput = document.getElementById('caption-input');
+    const albumInput = document.getElementById('album-input');
+    const statusText = document.getElementById('upload-status');
+
+    if (fileInput.files.length === 0) {
+        alert('写真を選択してください。');
+        return;
+    }
+
+    const formData = new FormData();
+    
+    // 選択された複数のファイルをFormDataに追加
+    for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('photo', fileInput.files[i]);
+    }
+    
+    formData.append('caption', captionInput.value);
+    formData.append('album', albumInput.value);
+
+    statusText.style.display = 'block';
+
+    try {
+        const response = await fetch('/trip/{{ trip.id }}/add_photo', {
+            method: 'POST',
+            body: formData // Content-Typeは自動でmultipartに設定されます
+        });
+
+        if (response.ok) {
+            // アップロード成功したらページを再読み込みして反映させる
+            window.location.href = '/trip/{{ trip.id }}?tab=photos';
+        } else {
+            alert('アップロードに失敗しました。');
+            statusText.style.display = 'none';
+        }
+    } catch (err) {
+        console.error('Upload error:', err);
+        alert('通信エラーが発生しました。');
+        statusText.style.display = 'none';
+    }
+}
     </script>
 </body>
 </html>
