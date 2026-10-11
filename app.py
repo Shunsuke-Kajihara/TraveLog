@@ -229,7 +229,20 @@ def update_currencies(trip_id):
 
 @app.route("/trip/<trip_id>/add_photo", methods=["POST"])
 def add_photo(trip_id):
-    print("--- add_photo called ---")
+    print("=== [DEBUG] add_photo called ===")
+    print("1. Method:", request.method)
+    print("2. Content-Type Header:", request.headers.get("Content-Type"))
+    print("3. request.form (Text data):", dict(request.form))
+    print("4. request.files keys:", list(request.files.keys()))
+    
+    # ファイルがどう格納されているか全チェック
+    for key in request.files:
+        files_list = request.files.getlist(key)
+        print(f"   - file key '{key}': {len(files_list)} items")
+        for f in files_list:
+            print(f"     -> filename: '{f.filename}', size/type: {f.mimetype}")
+
+    print("=== [DEBUG] end of debug ===")
     try:
         data = load_trip_data(trip_id)
         if not data:
