@@ -4,7 +4,16 @@ from flask import Flask, redirect, render_template, request
 from werkzeug.utils import secure_filename
 from datetime import date
 import base64
+import cloudinaru
+import cloudinary.uploader
+import cloudinary.api
 
+# Cloudinaryの設定
+cloudinary.config(
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key = os.getenv("CLOUDINARY_API_KEY"),
+    api_secret = os.getenv("CLOUDINARY_API_SECRET")
+)
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "static/uploads"
@@ -234,12 +243,11 @@ def add_photo(trip_id):
     if not data:
         return "旅行データが見つかりません", 404
 
-    # JSONリクエストとして受け取る
-    req_data = request.get_json()
+    req_data = request.get_json(silent=True)
     if not req_data or "photos" not in req_data:
         return {"error": "No photos provided"}, 400
 
-    photos_payload = req_data["photos"]  # [{name, data (base64)}, ...]
+    photos_payload = req_data["photos"]
     caption = req_data.get("caption", "")
     album = req_data.get("album", "未分類").strip()
     if not album:
@@ -248,30 +256,32 @@ def add_photo(trip_id):
     if "photos" not in data:
         data["photos"] = []
 
-    trip_upload_folder = os.path.join(app.config["UPLOAD_FOLDER"], trip_id)
-    os.makedirs(trip_upload_folder, exist_ok=True)
-
     for item in photos_payload:
-        filename = secure_filename(item["name"])
+        filename = item["name"]
         base64_str = item["data"]
 
         try:
-            # "data:image/jpeg;base64,xxxx..." のようなプレフィックスがあれば剥がす
             if "," in base64_str:
                 base64_str = base64_str.split(",")[1]
 
+            # Base64データをデコードしてバイト列にする
             file_bytes = base64.b64decode(base64_str)
 
-            save_path = os.path.join(trip_upload_folder, filename)
-            with open(save_path, "wb") as f:
-                f.write(file_bytes)
+            # Cloudinaryへ直接アップロード
+            # (バイナリデータをそのままuploadメソッドに渡せます)
+            upload_result = cloudinary.uploader.upload(
+                file_bytes,
+                folder=f"travelog/{trip_id}"  # クラウド上のフォルダ分け
+            )
 
-            web_path = f"/static/uploads/{trip_id}/{filename}"
+            # Cloudinaryから安全なHTTPSの画像URLを取得
+            web_path = upload_result.get("secure_url")
+
             data["photos"].append(
                 {"path": web_path, "caption": caption, "album": album}
             )
         except Exception as e:
-            print(f"Error saving photo {filename}: {e}")
+            print(f"Error uploading photo {filename} to Cloudinary: {e}")
 
     save_trip_data(trip_id, data)
     return {"status": "success"}, 200
