@@ -4,7 +4,7 @@ from flask import Flask, redirect, render_template, request
 from werkzeug.utils import secure_filename
 from datetime import date
 import base64
-import cloudinaru
+import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
